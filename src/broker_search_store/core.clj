@@ -34,7 +34,6 @@
     (if (s/valid? :system/config coerced-config)
       (do
         (init-system! coerced-config)
-        (log/info {:version (or (:version coerced-config) "<unknown>")})
         (log/info {:database-uri (get-in coerced-config [:database-conn :database/uri])})
         (log/info {:port (get-in coerced-config [:server :port])}))
       (log/error {:error (phrase-first nil :system/config config)}))))
