@@ -11,7 +11,7 @@ This project contains a service which persists searches created by the
 ## Usage
 
 ```bash
-docker run -e PORT="8080" -e DATABASE_URI="datomic:mem://store" -p 8080:8080 ...
+docker run -e PORT="8080" -e DATABASE_URI="datomic:mem://store" -p 8080:8080 akiel/samply.broker.search.store:latest
 ```
 
 ## License
