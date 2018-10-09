@@ -1,0 +1,12 @@
+config:
+  target: 'http://localhost:8080'
+  phases:
+    - duration: 20
+      arrivalRate: 100
+scenarios:
+  - flow:
+    - post:
+        url: '/command/search/create'
+        json:
+          foo: 'bar'
+

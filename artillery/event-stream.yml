@@ -1,0 +1,15 @@
+config:
+  target: 'ws://localhost:8080/event-stream'
+  phases:
+    - duration: 20
+      arrivalRate: 20
+  payload:
+    path: "search-ids.csv"
+    fields:
+    - "search_id"
+scenarios:
+  - engine: 'ws'
+    flow:
+    - send: '{"type":"subscribe","topic":["search","criterion-added","{{ search_id }}"]}'
+    - think: 10
+    - send: '{"type":"unsubscribe","topic":["search","criterion-added","{{ search-id }}"]}'

@@ -52,7 +52,7 @@
 (s/fdef defcommand
   :args
   (s/cat
-    :name symbol?
+    :name :gba.command/name
     :doc-string (s/? string?)
     :attr-map (s/? map?)
     :bindings (s/tuple ::core-specs/binding-form)

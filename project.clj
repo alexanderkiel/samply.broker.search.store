@@ -13,6 +13,7 @@
    [com.datomic/datomic-free "0.9.5697"
     :exclusions [org.slf4j/slf4j-nop]]
    [integrant "0.6.3"]
+   [io.prometheus/simpleclient_hotspot "0.5.0"]
    [org.clojars.akiel/datomic-tools "0.4"]
    [org.clojars.akiel/env-tools "0.2"]
    [org.clojars.akiel/shortid "0.1.2"]
@@ -20,6 +21,7 @@
    [org.clojure/clojure "1.9.0"]
    [org.clojure/spec.alpha "0.2.176"]
    [phrase "0.3-alpha3"]
+   [prom-metrics "0.5-alpha1"]
    [ring/ring-core "1.7.0"
     :exclusions [clj-time commons-codec commons-fileupload
                  commons-io crypto-equality crypto-random]]

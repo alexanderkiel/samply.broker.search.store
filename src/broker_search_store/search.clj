@@ -1,5 +1,6 @@
 (ns broker-search-store.search
   (:require
+    [broker-search-store.database :refer [topic event]]
     [broker-search-store.database.command :refer [defcommand]]
     [clojure.set :as set]
     [clojure.spec.alpha :as s]
@@ -234,11 +235,91 @@
         upper-bound
         (assoc :search.criterion.metric-query/upper-bound (float upper-bound)))]}))
 
+
+
+;; ---- Command - Add-Criterion -----------------------------------------------
+
+
 (defcommand search/add-criterion
   {:param-spec ::json-criterion}
   [{:keys [search-id mdr-key] :as params}]
   (let [{:keys [tx-map more] :or {more []}} (criterion-tx-data params)]
     (conj more [:search/add-criterion search-id mdr-key tx-map])))
+
+
+(defn- criterion-search-id
+  "Extracts the search identifier from `tx-data` if the transaction contains
+  Datoms with attributes with the namespace `search.criterion` or
+  `search.criterion.metric-query`."
+  [db tx-data]
+  (some
+    (fn [{:keys [e a]}]
+      (let [attr-ns (namespace (d/ident db a))
+            entity (d/entity db e)]
+        (cond
+          (= "search.criterion" attr-ns)
+          (:search/id (:search/_criteria entity))
+
+          (= "search.criterion.metric-query" attr-ns)
+          (:search/id (:search/_criteria (:search.criterion/_metric-query entity))))))
+    tx-data))
+
+
+(defmethod topic :search/add-criterion
+  [_ {:keys [db-after tx-data]}]
+  (some->> (criterion-search-id db-after tx-data)
+           (conj ["search" "criterion-added"])))
+
+
+(def ^:private criterion-pattern
+  [:search.criterion/mdr-key
+   :search.criterion/type
+   :search.criterion/selected-values
+   {:search.criterion/metric-query
+    [:search.criterion.metric-query/type
+     :search.criterion.metric-query/lower-bound
+     :search.criterion.metric-query/upper-bound]}])
+
+
+(defn- criterion
+  "Returns the criterion entity from `tx-data` if the transaction contains
+  Datoms with attributes with the namespace `search.criterion` or
+  `search.criterion.metric-query`."
+  [db tx-data]
+  (some
+    (fn [{:keys [e a]}]
+      (let [attr-ns (namespace (d/ident db a))
+            entity (d/entity db e)]
+        (cond
+          (= "search.criterion" attr-ns)
+          entity
+
+          (= "search.criterion.metric-query" attr-ns)
+          (:search.criterion/_metric-query entity))))
+    tx-data))
+
+
+(defn- criterion-event-data
+  [{:search.criterion/keys [mdr-key type selected-values metric-query]}]
+  (cond->
+    {:mdr-key mdr-key
+     :type type}
+    (= :enumerated type)
+    (assoc :selected-values selected-values)
+    (= :float type)
+    (assoc :metric-query metric-query)))
+
+
+(defmethod event :search/criterion-added
+  [topic {:keys [db-after tx-data]}]
+  {:type "event"
+   :topic topic
+   :data (criterion-event-data (criterion db-after tx-data))})
+
+
+
+;; ---- Command - Edit-Criterion ----------------------------------------------
+
 
 (defcommand search/edit-criterion
   {:param-spec ::json-criterion}
@@ -250,6 +331,20 @@
       [[:search/edit-enumerated-criterion search-id mdr-key (set selected-values)]]
       :float
       [[:search/edit-float-criterion search-id mdr-key (first more)]])))
+
+
+(defmethod topic :search/edit-criterion
+  [_ {:keys [db-after tx-data]}]
+  (some->> (log/spy (criterion-search-id db-after tx-data))
+           (conj ["search" "criterion-edited"])))
+
+
+(defmethod event :search/criterion-edited
+  [topic {:keys [db-after tx-data]}]
+  {:type "event"
+   :topic topic
+   :data (criterion-event-data (criterion db-after tx-data))})
+
 
 (defphraser json-criterion-type
   [_ {{:keys [type]} :val}]
