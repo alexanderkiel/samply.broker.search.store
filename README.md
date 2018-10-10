@@ -1,3 +1,5 @@
+[![Docker Automated build](https://img.shields.io/docker/automated/akiel/samply.broker.search.store.svg)](https://hub.docker.com/r/akiel/samply.broker.search.store/)
+
 # Samply Broker Search Store
 
 This project contains a service which persists searches created by the 
